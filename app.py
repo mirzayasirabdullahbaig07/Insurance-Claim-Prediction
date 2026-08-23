@@ -34,32 +34,40 @@ GAUGE_MAX = 55000
 
 # ---------------------------------------------------------------------------
 # Global styling — "insurance dashboard / trust" theme
+# Built on top of Streamlit's own theme variables (--background-color,
+# --secondary-background-color, --text-color) so the app looks right in
+# BOTH light and dark mode, whichever the user has selected in Settings.
+# Accent colors (sky/coral/green/amber) stay fixed since they read fine
+# against either a light or dark surface; everything else derives from
+# the active theme via color-mix().
 # ---------------------------------------------------------------------------
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Inter:wght@400;500;600&family=Roboto+Mono:wght@400;500;600&display=swap');
 
 :root {
-    --bg: #0A121A;
-    --surface: rgba(19, 30, 41, 0.55);
-    --surface-solid: #131E29;
-    --surface-2: #182430;
-    --border: #223140;
-    --border-soft: rgba(56, 189, 248, 0.15);
     --sky: #38BDF8;
     --sky-dim: rgba(56, 189, 248, 0.15);
     --coral: #FB7185;
     --green: #2DD4A7;
     --amber: #FBBF24;
-    --text: #E7EEF4;
-    --muted: #87979F;
+
+    /* Theme-derived tokens — adapt automatically to light/dark */
+    --text: var(--text-color);
+    --muted: color-mix(in srgb, var(--text-color) 55%, var(--background-color) 45%);
+    --surface-solid: var(--secondary-background-color);
+    --surface: color-mix(in srgb, var(--secondary-background-color) 72%, transparent);
+    --surface-2: color-mix(in srgb, var(--secondary-background-color) 90%, var(--text-color) 10%);
+    --border: color-mix(in srgb, var(--text-color) 18%, transparent);
+    --border-soft: color-mix(in srgb, var(--text-color) 12%, transparent);
+    --sidebar-bg: color-mix(in srgb, var(--background-color) 90%, var(--text-color) 10%);
 }
 
 html, body, [data-testid="stAppViewContainer"] {
     background:
-        radial-gradient(circle at 10% -10%, rgba(56,189,248,0.08) 0%, transparent 40%),
-        radial-gradient(circle at 92% 6%, rgba(45,212,167,0.05) 0%, transparent 35%),
-        linear-gradient(180deg, #0C151E 0%, var(--bg) 100%) !important;
+        radial-gradient(circle at 10% -10%, color-mix(in srgb, var(--sky) 7%, transparent) 0%, transparent 40%),
+        radial-gradient(circle at 92% 6%, color-mix(in srgb, var(--green) 5%, transparent) 0%, transparent 35%),
+        var(--background-color) !important;
     color: var(--text);
     font-family: 'Inter', sans-serif;
 }
@@ -68,7 +76,7 @@ html, body, [data-testid="stAppViewContainer"] {
 [data-testid="block-container"] { padding-top: 2rem; }
 
 [data-testid="stSidebar"] {
-    background: #080F16 !important;
+    background: var(--sidebar-bg) !important;
     border-right: 1px solid var(--border);
 }
 [data-testid="stSidebar"] * { font-family: 'Inter', sans-serif; }
@@ -91,8 +99,8 @@ h1, h2, h3, h4 { font-family: 'Sora', sans-serif !important; letter-spacing: 0.1
     border-radius: 50%;
     border: 1px solid var(--sky);
     flex-shrink: 0;
-    background: #071019;
-    box-shadow: 0 0 20px rgba(56, 189, 248, 0.25), inset 0 0 10px rgba(56,189,248,0.08);
+    background: var(--surface-2);
+    box-shadow: 0 0 20px rgba(56, 189, 248, 0.2), inset 0 0 10px rgba(56,189,248,0.06);
     display: flex; align-items: center; justify-content: center;
 }
 .compass-needle {
@@ -105,8 +113,8 @@ h1, h2, h3, h4 { font-family: 'Sora', sans-serif !important; letter-spacing: 0.1
 @keyframes swing { 0%,100% { transform: rotate(-18deg); } 50% { transform: rotate(18deg); } }
 
 .hero-title {
-    font-size: 29px; font-weight: 800; margin: 0; color: var(--text);
-    background: linear-gradient(90deg, #F5F9FC 25%, var(--sky) 100%);
+    font-size: 29px; font-weight: 800; margin: 0;
+    background: linear-gradient(90deg, var(--text) 25%, var(--sky) 100%);
     -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
 }
 .hero-sub {
@@ -127,11 +135,11 @@ div[data-testid="stVerticalBlockBorderWrapper"] {
     border: 1px solid var(--border-soft) !important;
     border-radius: 16px !important;
     backdrop-filter: blur(10px);
-    box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+    box-shadow: 0 4px 24px rgba(0,0,0,0.12);
     transition: border-color 0.25s ease, box-shadow 0.25s ease;
 }
 div[data-testid="stVerticalBlockBorderWrapper"]:hover {
-    border-color: rgba(56, 189, 248, 0.35) !important;
+    border-color: rgba(56, 189, 248, 0.4) !important;
     box-shadow: 0 4px 26px rgba(56, 189, 248, 0.08);
 }
 
@@ -156,7 +164,7 @@ div[data-testid="stMetricValue"] {
 
 /* ---------------- Buttons ---------------- */
 .stButton > button {
-    background: linear-gradient(135deg, #10293A, #0C1822) !important;
+    background: var(--surface-2) !important;
     color: var(--sky) !important;
     border: 1px solid var(--sky) !important;
     border-radius: 10px !important;
@@ -176,7 +184,11 @@ div[data-testid="stMetricValue"] {
 [data-testid="stSidebar"] .stRadio > label { font-family: 'Roboto Mono', monospace; }
 
 /* ---------------- Speedometer gauge ---------------- */
-.speedo-wrap { display: flex; flex-direction: column; align-items: center; padding: 6px 0 4px 0; animation: fadein 0.5s ease; }
+.speedo-wrap {
+    display: flex; flex-direction: column; align-items: center;
+    padding: 6px 0 4px 0; animation: fadein 0.5s ease;
+    color: var(--text); /* lets the inline SVG use currentColor and adapt to theme */
+}
 @keyframes fadein { from { opacity: 0; transform: scale(0.94); } to { opacity: 1; transform: scale(1); } }
 .speedo-value {
     font-family: 'Roboto Mono', monospace; font-size: 34px; font-weight: 700;
@@ -191,9 +203,9 @@ div[data-testid="stMetricValue"] {
     letter-spacing: 1.2px; text-transform: uppercase;
     padding: 5px 14px; border-radius: 999px; margin-top: 10px;
 }
-.band-low { background: rgba(45, 212, 167, 0.12); color: var(--green); border: 1px solid rgba(45,212,167,0.4); }
-.band-mid { background: rgba(251, 191, 36, 0.12); color: var(--amber); border: 1px solid rgba(251,191,36,0.4); }
-.band-high { background: rgba(251, 113, 133, 0.12); color: var(--coral); border: 1px solid rgba(251,113,133,0.4); }
+.band-low { background: rgba(45, 212, 167, 0.14); color: #0F9C77; border: 1px solid rgba(45,212,167,0.5); }
+.band-mid { background: rgba(251, 191, 36, 0.16); color: #B9790B; border: 1px solid rgba(251,191,36,0.5); }
+.band-high { background: rgba(251, 113, 133, 0.14); color: #E11D48; border: 1px solid rgba(251,113,133,0.5); }
 
 /* ---------------- Eyebrow labels ---------------- */
 .eyebrow {
@@ -207,7 +219,7 @@ div[data-testid="stMetricValue"] {
     border: 1px solid var(--border-soft);
     border-radius: 14px;
     padding: 16px 14px;
-    background: linear-gradient(160deg, rgba(56,189,248,0.06), rgba(255,255,255,0.01));
+    background: color-mix(in srgb, var(--sky) 6%, var(--surface-solid) 94%);
     margin-top: 6px;
 }
 .profile-avatar {
@@ -309,13 +321,18 @@ def claim_band(amount: float):
 
 
 def render_speedometer(amount: float):
+    """Renders a semicircular gauge. Track and needle use currentColor so
+    they inherit --text from the wrapping .speedo-wrap div and automatically
+    read correctly whether the app is in light or dark mode."""
     pct = min(amount / GAUGE_MAX, 1.0)
-    deg = 180 * pct
     band_class, band_text = claim_band(amount)
+    needle_x = 100 + 68 * np.cos(np.pi - np.pi * pct)
+    needle_y = 100 - 68 * np.sin(np.pi - np.pi * pct)
 
     svg = f"""
     <svg viewBox="0 0 200 110" width="220" height="125">
-      <path d="M 10 100 A 90 90 0 0 1 190 100" fill="none" stroke="#182430" stroke-width="16" stroke-linecap="round"/>
+      <path d="M 10 100 A 90 90 0 0 1 190 100" fill="none" stroke="currentColor"
+            stroke-opacity="0.14" stroke-width="16" stroke-linecap="round"/>
       <path d="M 10 100 A 90 90 0 0 1 190 100" fill="none" stroke="url(#grad)" stroke-width="16"
             stroke-linecap="round"
             stroke-dasharray="282.6" stroke-dashoffset="{282.6 * (1 - pct)}"/>
@@ -326,9 +343,9 @@ def render_speedometer(amount: float):
           <stop offset="100%" stop-color="#FB7185"/>
         </linearGradient>
       </defs>
-      <line x1="100" y1="100" x2="{100 + 68*np.cos(np.pi - np.pi*pct)}" y2="{100 - 68*np.sin(np.pi - np.pi*pct)}"
-            stroke="#E7EEF4" stroke-width="3" stroke-linecap="round"/>
-      <circle cx="100" cy="100" r="6" fill="#E7EEF4"/>
+      <line x1="100" y1="100" x2="{needle_x}" y2="{needle_y}"
+            stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+      <circle cx="100" cy="100" r="6" fill="currentColor"/>
     </svg>
     """
     st.markdown(f"""
@@ -540,18 +557,18 @@ elif page.startswith("📊"):
                         p2.metric("MAE", f"${mean_absolute_error(y_true, preds):,.0f}")
                         p3.metric("R² SCORE", f"{r2_score(y_true, preds):.3f}")
 
+                        # Deliberately kept as a plain light-styled chart (default
+                        # matplotlib white background, dark text) rather than a
+                        # theme-matched dark chart — a light chart card reads fine
+                        # sitting on either a light or dark app background, whereas
+                        # a hardcoded dark chart looks broken in light mode.
                         fig, ax = plt.subplots(figsize=(5, 4))
-                        fig.patch.set_facecolor("#131E29")
-                        ax.set_facecolor("#131E29")
-                        ax.scatter(y_true, preds, alpha=0.5, color="#38BDF8", s=18)
+                        ax.scatter(y_true, preds, alpha=0.5, color="#0284C7", s=18)
                         lims = [min(y_true.min(), preds.min()), max(y_true.max(), preds.max())]
-                        ax.plot(lims, lims, color="#FB7185", linestyle="--", linewidth=1.5)
-                        ax.set_xlabel("Actual Claim", color="#E7EEF4")
-                        ax.set_ylabel("Predicted Claim", color="#E7EEF4")
-                        ax.set_title("Actual vs Predicted", color="#E7EEF4")
-                        ax.tick_params(colors="#E7EEF4")
-                        for spine in ax.spines.values():
-                            spine.set_color("#223140")
+                        ax.plot(lims, lims, color="#E11D48", linestyle="--", linewidth=1.5)
+                        ax.set_xlabel("Actual Claim")
+                        ax.set_ylabel("Predicted Claim")
+                        ax.set_title("Actual vs Predicted")
                         st.pyplot(fig, use_container_width=False)
 
 # ---------------------------------------------------------------------------
